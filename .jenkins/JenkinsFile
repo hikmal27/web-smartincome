@@ -1,21 +1,32 @@
 pipeline {
 	agent any
+  tools {
+    nodejs "node17.4"
+    }
 	stages {
 		stage("Install Dependencies") {
 			steps{
 				echo 'Installing dependencies'
+        nodejs(nodeJSInstallationName: 'node17.4'){
+           sh "npm install"
+           }
 			}
 		}
-		stage('Build') {
-            steps {
-                echo 'Compiling and building'
-            }
-        }
-		stage('Test') {
-            steps {
-                echo 'Running Test'
-            }
-        }
+		stage('Scanning Code With Sonarqube'){
+			steps {
+				script {
+					def scannerHome = tool 'SonarQubeScanner-4.6.2';
+					withSonarQubeEnv('sonarqube') {
+					  sh "${scannerHome}/bin/sonar-scanner \
+					  -D sonar.login=admin \
+					  -D sonar.password=Smart@123 \
+					  -D sonar.projectKey=smart-income-landing-test \
+					  -D sonar.exclusions=vendor/**,resources/**,**/*.java \
+					  -D sonar.host.url=http://20.100.1.35:9000/"
+					}
+				}
+			}
+		}
 		stage("Build and Push Image") {
 			steps {
 				echo 'Compiling and building'
